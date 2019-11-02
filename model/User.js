@@ -39,6 +39,9 @@ const userSchema = new Schema({
     trim: true,
     required: true
   },
+  profile_url: {
+    type: String
+  },
   project_list: {
     type: [projectSchema]
   }

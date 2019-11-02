@@ -2,6 +2,7 @@ const createError = require('http-errors');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const cors = require('cors');
 
 require('dotenv').config();
 
@@ -27,6 +28,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+const corsOptions = {
+  origin: process.env.CLIENT_URL,
+}
+app.use(cors(corsOptions));
+
 app.use('/', indexRouter);
 
 app.use(function(req, res, next) {
@@ -38,7 +44,7 @@ app.use(function(err, req, res, next) {
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   res.status(err.status || 500);
-  res.send('error');
+  res.json({ result: err.message });
 });
 
 module.exports = app;
