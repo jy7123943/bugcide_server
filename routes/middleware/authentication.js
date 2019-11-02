@@ -13,6 +13,7 @@ exports.authenticateUser = async (req, res, next) => {
     const token = authorization.split(' ')[1];
 
     let decoded;
+
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     } catch (err) {
@@ -25,6 +26,7 @@ exports.authenticateUser = async (req, res, next) => {
       return res.status(401).json({ result: 'unauthorized' });
     }
 
+    req.user = user;
     next();
   } catch (err) {
     return res.status(400).json({ result: 'failed' });

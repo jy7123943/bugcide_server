@@ -23,9 +23,4 @@ router.post('/login', async (req, res, next) => {
   }
 });
 
-router.get('/', authenticateUser, (req, res, next) => {
-
-  res.json({hello: 'hello'});
-});
-
 module.exports = router;

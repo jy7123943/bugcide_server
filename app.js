@@ -7,6 +7,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const indexRouter = require('./routes/index');
+const projectRouter = require('./routes/project');
 const app = express();
 
 const mongoose = require('mongoose');
@@ -34,6 +35,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use('/', indexRouter);
+app.use('/project', projectRouter);
 
 app.use(function(req, res, next) {
   next(createError(404));
@@ -44,7 +46,7 @@ app.use(function(err, req, res, next) {
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   res.status(err.status || 500);
-  res.json({ result: err.message });
+  res.json({ result: 'Something went wrong' });
 });
 
 module.exports = app;
