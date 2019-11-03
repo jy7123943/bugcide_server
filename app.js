@@ -29,10 +29,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-const corsOptions = {
-  origin: process.env.CLIENT_URL,
+const WHITE_LIST = [
+  process.env.CLIENT_URL,
+  process.env.MODULE_URL
+];
+const CORS_OPTION = {
+  origin: (origin, callback) => {
+    if (WHITE_LIST.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
 }
-app.use(cors(corsOptions));
+app.use(cors(CORS_OPTION));
 
 app.use('/', indexRouter);
 app.use('/project', projectRouter);

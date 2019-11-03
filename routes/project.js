@@ -90,6 +90,10 @@ router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
     const { errorInfo } = req.body;
     const { error_id: errorId } = req.project;
 
+    if (!errorInfo.length) {
+      return res.json({ result: 'not changed' });
+    }
+
     await ErrorList.findByIdAndUpdate(errorId, {
       $push: {
         error_list: {
