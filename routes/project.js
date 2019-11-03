@@ -29,7 +29,7 @@ router.post('/', authenticateUser, validateProject, async (req, res) => {
       }
     });
 
-    res.json({ result: 'ok', projectToken: token });
+    res.json({ result: 'ok', projectToken: token, newProject });
   } catch (err) {
     console.log(err);
     res.status(400).json({ result: 'failed' });
@@ -40,11 +40,19 @@ router.get('/', authenticateUser, async (req, res) => {
   try {
     console.log(req.user);
     const {
+      name,
+      profile_url: profileUrl,
       project_list: projectList
     } = req.user;
 
+    const userInfo = { name, profileUrl };
+
     if (!projectList.length) {
-      return res.json({ result: 'ok', projectList });
+      return res.json({
+        result: 'ok',
+        userInfo,
+        projectList
+      });
     }
 
     const { page } = req.query;
@@ -54,6 +62,7 @@ router.get('/', authenticateUser, async (req, res) => {
 
     return res.json({
       result: 'ok',
+      userInfo,
       projectList: projectList.slice(startIndex, endIndex),
       totalProjectsLength: projectList.length
     });
