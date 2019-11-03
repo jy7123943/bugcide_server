@@ -32,3 +32,29 @@ exports.authenticateUser = async (req, res, next) => {
     return res.status(400).json({ result: 'failed' });
   }
 };
+
+exports.authenticateBugcideModule = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      'project_list': {
+        $elemMatch: {
+          token
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(401).json({ result: 'unauthorized' });
+    }
+
+    const targetProject = user.project_list.find(project => project.token === token);
+
+    req.user = user;
+    req.project = targetProject;
+    next();
+  } catch (err) {
+    return res.status(400).json({ result: 'failed' });
+  }
+};

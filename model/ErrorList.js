@@ -39,4 +39,10 @@ const errorSchema = new Schema({
   }
 });
 
-module.exports = mongoose.model('Error', errorSchema);
+const errorListSchema = new Schema({
+  error_list: {
+    type: [errorSchema]
+  }
+});
+
+module.exports = mongoose.model('ErrorList', errorListSchema);
