@@ -10,11 +10,17 @@ router.post('/login', async (req, res, next) => {
 
     const jwtoken = jwt.sign({ socialId }, process.env.JWT_SECRET_KEY);
 
-    await new User({
-      social_id: socialId,
-      profile_url: profileUrl,
-      name
-    }).save();
+    const user = await User.findOne({
+      social_id: socialId
+    });
+
+    if (!user) {
+      await new User({
+        social_id: socialId,
+        profile_url: profileUrl,
+        name
+      }).save();
+    }
 
     res.json({ result: 'ok', jwtoken });
   } catch (err) {
