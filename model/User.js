@@ -21,10 +21,6 @@ const projectSchema = new Schema({
   error_id: {
     type: Schema.Types.ObjectId,
     ref: 'Error'
-  },
-  user_id: {
-    type: Schema.Types.ObjectId,
-    ref: 'User'
   }
 });
 

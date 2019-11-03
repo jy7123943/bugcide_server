@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const randomstring = require('randomstring');
 const User = require('../model/User');
 const Error = require('../model/Error');
 const { authenticateUser } = require('./middleware/authentication');
@@ -8,17 +9,27 @@ const { validateProject } = require('./middleware/validation');
 router.post('/', authenticateUser, validateProject, async (req, res) => {
   try {
     console.log(req.user);
-    const user = await User.findByIdAndUpdate(req.user._id, {
+    const { name } = req.body;
+
+    const randomStr = randomstring.generate(5);
+    const projectName = name.toLowerCase().replace(/\s/g, '-');
+    const token = `${projectName}-${randomStr}`;
+
+    const newProject = {
+      ...req.body,
+      token
+    };
+
+    await User.findByIdAndUpdate(req.user._id, {
       $push: {
         project_list: {
-          $each: [req.body],
+          $each: [newProject],
           $position: 0
         }
       }
     });
-    console.log(user);
 
-    res.json({ result: 'ok '});
+    res.json({ result: 'ok', projectToken: token });
   } catch (err) {
     console.log(err);
     res.status(400).json({ result: 'failed' });
