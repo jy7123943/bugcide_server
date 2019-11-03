@@ -63,39 +63,41 @@ router.get('/', authenticateUser, async (req, res) => {
   }
 });
 
-router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
+router.post('/:token', authenticateBugcideModule, async (req, res) => {
   try {
     const { token } = req.params;
-    const { errorInfo } = req.body;
     const { error_id: errorId } = req.project;
 
     if (!errorId) {
       const newErrorList = await new ErrorList().save();
-
-      await newErrorList.updateOne({
-        $push: {
-          error_list: {
-            $each: errorInfo,
-            $position: 0
-          }
-        }
-      });
 
       await User.updateOne({ 'project_list.token': token }, {
         $set: {
           'project_list.$.error_id': newErrorList._id
         }
       });
-    } else {
-      await ErrorList.findByIdAndUpdate(errorId, {
-        $push: {
-          error_list: {
-            $each: errorInfo,
-            $position: 0
-          }
-        }
-      });
     }
+
+    return res.json({ result: 'ok' });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ result: 'failed' });
+  }
+});
+
+router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
+  try {
+    const { errorInfo } = req.body;
+    const { error_id: errorId } = req.project;
+
+    await ErrorList.findByIdAndUpdate(errorId, {
+      $push: {
+        error_list: {
+          $each: errorInfo,
+          $position: 0
+        }
+      }
+    });
 
     return res.json({ result: 'ok' });
   } catch (err) {
