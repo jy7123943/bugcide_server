@@ -93,7 +93,7 @@ router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
       return res.json({ result: 'not changed' });
     }
 
-    const updated = await ErrorList.findByIdAndUpdate(errorId, {
+    await ErrorList.findByIdAndUpdate(errorId, {
       $push: {
         error_list: {
           $each: errorInfo,
@@ -101,7 +101,6 @@ router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
         }
       }
     });
-    console.log('updated: ', updated);
 
     return res.json({ result: 'ok' });
   } catch (err) {
