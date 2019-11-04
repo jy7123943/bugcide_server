@@ -76,8 +76,8 @@ router.get('/:token', authenticateUser, async (req, res) => {
   try {
     const { token } = req.params;
     const { page } = req.query;
-
     const { project_list: projectList } = req.user;
+
     const targetProject = projectList.find(project => project.token === token);
     const { error_id: errorId } = targetProject;
 
@@ -87,33 +87,14 @@ router.get('/:token', authenticateUser, async (req, res) => {
 
     const PAGE_ITEM_LENGTH = 50;
     let startIndex = PAGE_ITEM_LENGTH * Number(page);
-    let endIndex = startIndex + PAGE_ITEM_LENGTH;
 
-    const targetErrorList = ErrorList.findById(errorId, {
-      'error_list': {
-        $slice: [0, 50]
-      }
-    });
+    const errorList = await ErrorList.findById(errorId)
+      .slice('error_list', [startIndex, PAGE_ITEM_LENGTH]);
 
-    // const targetErrorList = ErrorList.findById(errorId)
-      // .sort([[created_at, 'descending']])
-      // .limit(50)
-
-    // Score.find({ match: {$in: ids}} )
-    //  .sort([[score_sort, 'descending']])
-    //  .skip(skip)
-    //  .limit(limit)
-    //  .exec(function(err, scores) {
-    // if (err || !scores) {
-    //     throw err;
-    // } else {
-    //     // do something cool
-    // }
-// });
-    // db.posts.find( {}, { comments: { $slice: [ 20, 10 ] } } )
-
+    res.json({ result: 'ok', errorList, targetProject });
   } catch (err) {
-
+    console.log(err);
+    res.status(400).json({ result: 'failed' });
   }
 });
 
