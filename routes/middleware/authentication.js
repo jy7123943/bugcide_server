@@ -4,7 +4,6 @@ const User = require('../../model/User');
 exports.authenticateUser = async (req, res, next) => {
   try {
     const { authorization } = req.headers;
-    console.log(authorization);
 
     if (!authorization.startsWith('Bearer ')) {
       return res.status(401).json({ result: 'invalid request' });
