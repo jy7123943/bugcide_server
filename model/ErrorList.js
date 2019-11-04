@@ -16,17 +16,24 @@ const errorSchema = new Schema({
     required: true
   },
   filename: {
-    type: String
+    type: String,
+    required: true
   },
   lineno: {
-    type: Number
+    type: Number,
+    required: true
   },
   colno: {
-    type: Number
+    type: Number,
+    required: true
   },
   created_at: {
     type: Date,
     required: true
+  },
+  duplicate_count: {
+    type: Number,
+    default: 1
   },
   memo: {
     type: String

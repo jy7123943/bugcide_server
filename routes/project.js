@@ -72,6 +72,51 @@ router.get('/', authenticateUser, async (req, res) => {
   }
 });
 
+router.get('/:token', authenticateUser, async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { page } = req.query;
+
+    const { project_list: projectList } = req.user;
+    const targetProject = projectList.find(project => project.token === token);
+    const { error_id: errorId } = targetProject;
+
+    if (!errorId) {
+      return res.json({ result: 'Project not started' });
+    }
+
+    const PAGE_ITEM_LENGTH = 50;
+    let startIndex = PAGE_ITEM_LENGTH * Number(page);
+    let endIndex = startIndex + PAGE_ITEM_LENGTH;
+
+    const targetErrorList = ErrorList.findById(errorId, {
+      'error_list': {
+        $slice: [0, 50]
+      }
+    });
+
+    // const targetErrorList = ErrorList.findById(errorId)
+      // .sort([[created_at, 'descending']])
+      // .limit(50)
+
+    // Score.find({ match: {$in: ids}} )
+    //  .sort([[score_sort, 'descending']])
+    //  .skip(skip)
+    //  .limit(limit)
+    //  .exec(function(err, scores) {
+    // if (err || !scores) {
+    //     throw err;
+    // } else {
+    //     // do something cool
+    // }
+// });
+    // db.posts.find( {}, { comments: { $slice: [ 20, 10 ] } } )
+
+  } catch (err) {
+
+  }
+});
+
 router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
   try {
     const { token } = req.params;
@@ -93,10 +138,39 @@ router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
       return res.json({ result: 'not changed' });
     }
 
+    let duplicateCount = 1;
+    let compressedList = [];
+
+    if (errorInfo.length > 1) {
+      errorInfo.forEach((item, i) => {
+        const last = errorInfo.length - 1;
+        if (i !== last) {
+          if (errorInfo[i + 1].stack !== item.stack) {
+            item.duplicate_count = duplicateCount;
+            compressedList.push(item);
+            duplicateCount = 1;
+          } else {
+            duplicateCount++;
+          }
+        } else {
+          if (errorInfo[last - 1].stack === item.stack) {
+            item.duplicate_count = duplicateCount;
+            compressedList.push(item);
+            duplicateCount = 1;
+          } else {
+            compressedList.push(item);
+            duplicateCount = 1;
+          }
+        }
+      });
+    } else {
+      compressedList = errorInfo;
+    }
+
     await ErrorList.findByIdAndUpdate(errorId, {
       $push: {
         error_list: {
-          $each: errorInfo,
+          $each: compressedList,
           $position: 0
         }
       }
