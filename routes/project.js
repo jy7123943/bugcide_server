@@ -85,13 +85,24 @@ router.get('/:token', authenticateUser, async (req, res) => {
       return res.json({ result: 'Project not started' });
     }
 
-    const PAGE_ITEM_LENGTH = 50;
+    const PAGE_ITEM_LENGTH = 20;
     let startIndex = PAGE_ITEM_LENGTH * Number(page);
 
     const errorList = await ErrorList.findById(errorId)
-      .slice('error_list', [startIndex, PAGE_ITEM_LENGTH]);
+      .slice('error_list', [startIndex, PAGE_ITEM_LENGTH])
 
-    res.json({ result: 'ok', errorList, targetProject });
+    const [{ error_list: totalErrorListLength }] = await ErrorList.aggregate()
+      .match({ _id: errorId })
+      .project({
+        error_list: { $size: '$error_list' }
+      });
+
+    res.json({
+      result: 'ok',
+      errorList,
+      targetProject,
+      totalErrorListLength
+    });
   } catch (err) {
     console.log(err);
     res.status(400).json({ result: 'failed' });
