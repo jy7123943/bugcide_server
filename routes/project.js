@@ -56,9 +56,9 @@ router.get('/', authenticateUser, async (req, res) => {
     }
 
     const { page } = req.query;
-    const PAGE_ITEM_LENGTH = 10;
-    let startIndex = PAGE_ITEM_LENGTH * Number(page);
-    let endIndex = startIndex + PAGE_ITEM_LENGTH;
+    const PAGE_ITEM_LIMIT = 10;
+    let startIndex = PAGE_ITEM_LIMIT * Number(page);
+    let endIndex = startIndex + PAGE_ITEM_LIMIT;
 
     return res.json({
       result: 'ok',
@@ -75,31 +75,56 @@ router.get('/', authenticateUser, async (req, res) => {
 router.get('/:token', authenticateUser, async (req, res) => {
   try {
     const { token } = req.params;
-    const { page } = req.query;
+    const { page, sort } = req.query;
     const { project_list: projectList } = req.user;
+    console.log(sort)
 
     const targetProject = projectList.find(project => project.token === token);
     const { error_id: errorId } = targetProject;
 
+    console.log(errorId);
+
     if (!errorId) {
-      return res.json({ result: 'Project not started' });
+      return res.json({ result: 'Project not started', targetProject });
     }
 
-    const PAGE_ITEM_LENGTH = 20;
-    let startIndex = PAGE_ITEM_LENGTH * Number(page);
+    const PAGE_ITEM_LIMIT = 20;
+    let startIndex = PAGE_ITEM_LIMIT * Number(page);
 
-    const errorList = await ErrorList.findById(errorId)
-      .slice('error_list', [startIndex, PAGE_ITEM_LENGTH])
-
-    const [{ error_list: totalErrorListLength }] = await ErrorList.aggregate()
+    const [{ totalErrorListLength }] = await ErrorList.aggregate()
       .match({ _id: errorId })
       .project({
-        error_list: { $size: '$error_list' }
+        totalErrorListLength: {
+          $size: '$error_list'
+        }
       });
+
+    let errorList;
+    if (sort === 'desc') {
+      startIndex = totalErrorListLength - (PAGE_ITEM_LIMIT * (Number(page) + 1));
+
+      [{ errorList }] = await ErrorList.aggregate()
+        .match({ _id: errorId })
+        .project({
+          errorList: {
+            $reverseArray: {
+              $slice: ['$error_list', startIndex, PAGE_ITEM_LIMIT]
+            }
+          }
+        });
+    } else {
+      [{ errorList }] = await ErrorList.aggregate()
+        .match({ _id: errorId })
+        .project({
+          errorList: {
+            $slice: ['$error_list', startIndex, PAGE_ITEM_LIMIT]
+          }
+        });
+    }
 
     res.json({
       result: 'ok',
-      errorList,
+      errorList: errorList,
       targetProject,
       totalErrorListLength
     });
