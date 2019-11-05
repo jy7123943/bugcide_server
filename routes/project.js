@@ -8,7 +8,6 @@ const { validateProject } = require('./middleware/validation');
 
 router.post('/', authenticateUser, validateProject, async (req, res) => {
   try {
-    console.log(req.user);
     const { name } = req.body;
 
     const randomStr = randomstring.generate(5);
@@ -38,7 +37,6 @@ router.post('/', authenticateUser, validateProject, async (req, res) => {
 
 router.get('/', authenticateUser, async (req, res) => {
   try {
-    console.log(req.user);
     const {
       name,
       profile_url: profileUrl,
@@ -131,6 +129,34 @@ router.get('/:token', authenticateUser, async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(400).json({ result: 'failed' });
+  }
+});
+
+router.delete('/:token', authenticateUser, async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { project_list: projectList } = req.user;
+
+    const targetProject = projectList.find(project => project.token === token);
+    const { error_id: errorId } = targetProject;
+
+    if (errorId) {
+      await ErrorList.findByIdAndDelete(errorId);
+    }
+
+    await User.update({ _id: req.user._id }, {
+      $pull: {
+        project_list: { _id: targetProject._id }
+      }
+    }, {
+      safe: true,
+      multi: true
+    });
+
+    res.json({ result: 'ok' });
+  } catch (err) {
+    console.log(err);
+    res.json({ result: 'failed '});
   }
 });
 
