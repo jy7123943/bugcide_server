@@ -14,9 +14,12 @@ router.post('/', authenticateUser, validateProject, async (req, res) => {
     const projectName = name.toLowerCase().replace(/\s/g, '-');
     const token = `${projectName}-${randomStr}`;
 
+    const newErrorList = await new ErrorList().save();
+
     const newProject = {
       ...req.body,
-      token
+      token,
+      error_id: newErrorList._id
     };
 
     await User.findByIdAndUpdate(req.user._id, {
@@ -75,18 +78,15 @@ router.get('/:token', authenticateUser, async (req, res) => {
     const { token } = req.params;
     const { page, sort } = req.query;
     const { project_list: projectList } = req.user;
-    console.log(sort)
 
     const targetProject = projectList.find(project => project.token === token);
     const { error_id: errorId } = targetProject;
-
-    console.log(errorId);
 
     if (!errorId) {
       return res.json({ result: 'Project not started', targetProject });
     }
 
-    const PAGE_ITEM_LIMIT = 20;
+    let PAGE_ITEM_LIMIT = 20;
     let startIndex = PAGE_ITEM_LIMIT * Number(page);
 
     const [{ totalErrorListLength }] = await ErrorList.aggregate()
@@ -99,7 +99,11 @@ router.get('/:token', authenticateUser, async (req, res) => {
 
     let errorList;
     if (sort === 'desc') {
-      startIndex = totalErrorListLength - (PAGE_ITEM_LIMIT * (Number(page) + 1));
+      startIndex = Number(totalErrorListLength) - (PAGE_ITEM_LIMIT * (Number(page) + 1));
+      if (startIndex < 0) {
+        PAGE_ITEM_LIMIT = 20 + startIndex;
+        startIndex = 0
+      }
 
       [{ errorList }] = await ErrorList.aggregate()
         .match({ _id: errorId })
@@ -141,10 +145,11 @@ router.delete('/:token', authenticateUser, async (req, res) => {
     const { error_id: errorId } = targetProject;
 
     if (errorId) {
+      console.log('error Id: ', errorId);
       await ErrorList.findByIdAndDelete(errorId);
     }
 
-    await User.update({ _id: req.user._id }, {
+    await User.updateOne({ _id: req.user._id }, {
       $pull: {
         project_list: { _id: targetProject._id }
       }
@@ -162,64 +167,37 @@ router.delete('/:token', authenticateUser, async (req, res) => {
 
 router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
   try {
-    const { token } = req.params;
     const { errorInfo } = req.body;
     let { error_id: errorId } = req.project;
-
-    if (!errorId) {
-      const newErrorList = await new ErrorList().save();
-      errorId = newErrorList._id;
-
-      await User.updateOne({ 'project_list.token': token }, {
-        $set: {
-          'project_list.$.error_id': newErrorList._id
-        }
-      });
-    }
 
     if (!errorInfo.length) {
       return res.json({ result: 'not changed' });
     }
 
-    let duplicateCount = 1;
-    let compressedList = [];
-
-    if (errorInfo.length > 1) {
-      errorInfo.forEach((item, i) => {
-        const last = errorInfo.length - 1;
-        if (i !== last) {
-          if (errorInfo[i + 1].stack !== item.stack) {
-            item.duplicate_count = duplicateCount;
-            compressedList.push(item);
-            duplicateCount = 1;
-          } else {
-            duplicateCount++;
-          }
-        } else {
-          if (errorInfo[last - 1].stack === item.stack) {
-            item.duplicate_count = duplicateCount;
-            compressedList.push(item);
-            duplicateCount = 1;
-          } else {
-            compressedList.push(item);
-            duplicateCount = 1;
-          }
-        }
-      });
-    } else {
-      compressedList = errorInfo;
-    }
-
-    await ErrorList.findByIdAndUpdate(errorId, {
+    const updatedError = await ErrorList.findByIdAndUpdate(errorId, {
       $push: {
         error_list: {
-          $each: compressedList,
+          $each: errorInfo,
           $position: 0
         }
       }
+    }, { new : true });
+
+    const updateCollection = errorInfo.map(error => {
+      const hour = new Date(error.created_at).getHours();
+      const errorName = error.name;
+
+      return ErrorList.updateOne({ _id: errorId }, {
+        $inc: {
+          [`time_statistics.${hour}`]: error.duplicate_count,
+          [`name_statistics.${errorName}`]: error.duplicate_count
+        },
+      });
     });
 
-    return res.json({ result: 'ok' });
+    await Promise.all(updateCollection);
+
+    res.json({ result: 'ok' });
   } catch (err) {
     console.log(err);
     res.status(400).json({ result: 'failed' });

@@ -46,6 +46,13 @@ const errorSchema = new Schema({
 const errorListSchema = new Schema({
   error_list: {
     type: [errorSchema]
+  },
+  name_statistics: {
+    type: { [String]: Number }
+  },
+  time_statistics: {
+    type: [Number],
+    default: function() { return Array(24).fill(0); }
   }
 });
 
