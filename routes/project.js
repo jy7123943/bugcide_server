@@ -98,6 +98,8 @@ router.get('/:token', authenticateUser, async (req, res) => {
       });
 
     let errorList;
+    let nameStatistics;
+    let timeStatistics;
     if (sort === 'desc') {
       startIndex = Number(totalErrorListLength) - (PAGE_ITEM_LIMIT * (Number(page) + 1));
       if (startIndex < 0) {
@@ -105,28 +107,39 @@ router.get('/:token', authenticateUser, async (req, res) => {
         startIndex = 0
       }
 
-      [{ errorList }] = await ErrorList.aggregate()
+      [{ errorList, nameStatistics, timeStatistics }] = await ErrorList.aggregate()
         .match({ _id: errorId })
         .project({
           errorList: {
             $reverseArray: {
               $slice: ['$error_list', startIndex, PAGE_ITEM_LIMIT]
             }
-          }
+          },
+          nameStatistics: '$name_statistics',
+          timeStatistics: '$time_statistics'
         });
     } else {
-      [{ errorList }] = await ErrorList.aggregate()
+      [{ errorList, nameStatistics, timeStatistics }] = await ErrorList.aggregate()
         .match({ _id: errorId })
         .project({
           errorList: {
             $slice: ['$error_list', startIndex, PAGE_ITEM_LIMIT]
-          }
+          },
+          nameStatistics: '$name_statistics',
+          timeStatistics: '$time_statistics'
         });
     }
+
+    console.log('nameStatistics', nameStatistics);
+    console.log('timeStatistics', timeStatistics);
 
     res.json({
       result: 'ok',
       errorList: errorList,
+      statistics: {
+        name: nameStatistics,
+        time: timeStatistics
+      },
       targetProject,
       totalErrorListLength
     });
@@ -174,7 +187,7 @@ router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
       return res.json({ result: 'not changed' });
     }
 
-    const updatedError = await ErrorList.findByIdAndUpdate(errorId, {
+    await ErrorList.findByIdAndUpdate(errorId, {
       $push: {
         error_list: {
           $each: errorInfo,
@@ -186,12 +199,13 @@ router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
     const updateCollection = errorInfo.map(error => {
       const hour = new Date(error.created_at).getHours();
       const errorName = error.name;
+      const duplicateCount = error.duplicate_count ? Number(error.duplicate_count) : 0;
 
       return ErrorList.updateOne({ _id: errorId }, {
         $inc: {
-          [`time_statistics.${hour}`]: error.duplicate_count,
-          [`name_statistics.${errorName}`]: error.duplicate_count
-        },
+          [`time_statistics.${hour}`]: duplicateCount,
+          [`name_statistics.${errorName}`]: duplicateCount
+        }
       });
     });
 

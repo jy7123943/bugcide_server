@@ -52,7 +52,7 @@ const errorListSchema = new Schema({
   },
   time_statistics: {
     type: [Number],
-    default: function() { return Array(24).fill(0); }
+    default: function () { return Array(24).fill(0); }
   }
 });
 
