@@ -130,9 +130,6 @@ router.get('/:token', authenticateUser, async (req, res) => {
         });
     }
 
-    console.log('nameStatistics', nameStatistics);
-    console.log('timeStatistics', timeStatistics);
-
     res.json({
       result: 'ok',
       errorList: errorList,
@@ -158,7 +155,6 @@ router.delete('/:token', authenticateUser, async (req, res) => {
     const { error_id: errorId } = targetProject;
 
     if (errorId) {
-      console.log('error Id: ', errorId);
       await ErrorList.findByIdAndDelete(errorId);
     }
 
@@ -199,7 +195,7 @@ router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
     const updateCollection = errorInfo.map(error => {
       const hour = new Date(error.created_at).getHours();
       const errorName = error.name;
-      const duplicateCount = error.duplicate_count ? Number(error.duplicate_count) : 0;
+      const duplicateCount = error.duplicate_count ? Number(error.duplicate_count) : 1;
 
       return ErrorList.updateOne({ _id: errorId }, {
         $inc: {
