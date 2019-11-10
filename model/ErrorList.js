@@ -16,16 +16,13 @@ const errorSchema = new Schema({
     required: true
   },
   filename: {
-    type: String,
-    required: true
+    type: String
   },
   lineno: {
-    type: Number,
-    required: true
+    type: Number
   },
   colno: {
-    type: Number,
-    required: true
+    type: Number
   },
   created_at: {
     type: Date,
@@ -34,12 +31,6 @@ const errorSchema = new Schema({
   duplicate_count: {
     type: Number,
     default: 1
-  },
-  memo: {
-    type: String
-  },
-  related_resources: {
-    type: [String]
   }
 });
 
