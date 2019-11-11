@@ -16,8 +16,9 @@ jobs:
       - run:
           name: Install awscli
           command: |
-            sudo apt install python-pip python-dev
+            sudo apt-get clean
             sudo apt-get update
+            sudo apt install python-pip python-dev
             sudo pip install awsebcli --upgrade
       - run:
           name: Create AWS credentials manually
