@@ -190,7 +190,7 @@ router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
           $position: 0
         }
       }
-    }, { new : true });
+    });
 
     const updateCollection = errorInfo.map(error => {
       const hour = new Date(error.created_at).getHours();
