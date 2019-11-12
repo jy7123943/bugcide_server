@@ -34,7 +34,7 @@ router.post('/', authenticateUser, validateProject, async (req, res) => {
     res.json({ result: 'ok', projectToken: token, newProject });
   } catch (err) {
     console.log(err);
-    res.status(400).json({ result: 'failed' });
+    res.status(400).json({ result: 'failed', err });
   }
 });
 
@@ -69,7 +69,7 @@ router.get('/', authenticateUser, async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.status(400).json({ result: 'failed' });
+    res.status(400).json({ result: 'failed', err });
   }
 });
 
@@ -142,7 +142,7 @@ router.get('/:token', authenticateUser, async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.status(400).json({ result: 'failed' });
+    res.status(400).json({ result: 'failed', err });
   }
 });
 
@@ -170,7 +170,7 @@ router.delete('/:token', authenticateUser, async (req, res) => {
     res.json({ result: 'ok' });
   } catch (err) {
     console.log(err);
-    res.json({ result: 'failed '});
+    res.json({ result: 'failed', err });
   }
 });
 
@@ -210,7 +210,7 @@ router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
     res.json({ result: 'ok' });
   } catch (err) {
     console.log(err);
-    res.status(400).json({ result: 'failed' });
+    res.status(400).json({ result: 'failed', err });
   }
 });
 

@@ -24,7 +24,7 @@ router.post('/login', async (req, res) => {
     res.json({ result: 'ok', jwtoken });
   } catch (err) {
     console.log(err);
-    res.status(400).json({ result: 'failed' });
+    res.status(400).json({ result: 'failed', err });
   }
 });
 
