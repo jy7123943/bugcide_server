@@ -28,7 +28,7 @@ exports.authenticateUser = async (req, res, next) => {
     req.user = user;
     next();
   } catch (err) {
-    return res.status(400).json({ result: 'failed' });
+    return res.status(400).json({ result: 'failed', err });
   }
 };
 
@@ -54,6 +54,6 @@ exports.authenticateBugcideModule = async (req, res, next) => {
     req.project = targetProject;
     next();
   } catch (err) {
-    return res.status(400).json({ result: 'failed' });
+    return res.status(400).json({ result: 'failed', err });
   }
 };

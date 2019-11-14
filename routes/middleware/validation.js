@@ -34,6 +34,6 @@ exports.validateProject = async (req, res, next) => {
     next();
   } catch (err) {
     console.log(err);
-    return res.status(400).json({ result: 'failed' });
+    return res.status(400).json({ result: 'failed', err });
   }
 };
