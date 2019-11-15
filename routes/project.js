@@ -193,7 +193,7 @@ router.post('/:token/error', authenticateBugcideModule, async (req, res) => {
     });
 
     const updateCollection = errorInfo.map(error => {
-      const hour = new Date(error.created_at).getHours();
+      const hour = new Date(error.created_at).getUTCHours();
       const errorName = error.name;
       const duplicateCount = error.duplicate_count ? Number(error.duplicate_count) : 1;
 
