@@ -80,6 +80,11 @@ router.get('/:token', authenticateUser, async (req, res) => {
     const { project_list: projectList } = req.user;
 
     const targetProject = projectList.find(project => project.token === token);
+
+    if (!targetProject) {
+      return res.status(404).json({ result: 'Project Not Found' });
+    }
+
     const { error_id: errorId } = targetProject;
 
     if (!errorId) {
